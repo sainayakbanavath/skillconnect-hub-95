@@ -9,6 +9,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
+import { z } from "zod";
+
+const jobSchema = z.object({
+  title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title must be less than 200 characters"),
+  description: z.string().trim().min(50, "Description must be at least 50 characters").max(5000, "Description must be less than 5000 characters"),
+  required_skills: z.array(z.string().trim().min(1).max(50)).min(1, "At least one skill is required").max(20, "Maximum 20 skills allowed"),
+  tech_stack: z.array(z.string().trim().max(50)).max(20, "Maximum 20 tech items allowed"),
+  pay_per_hour: z.number().positive("Pay must be positive").max(10000, "Pay must be less than $10,000/hour"),
+  experience_level: z.enum(["entry", "intermediate", "expert"]),
+  location: z.string().trim().max(200, "Location must be less than 200 characters").optional(),
+});
 
 const PostJob = () => {
   const [title, setTitle] = useState("");
@@ -36,15 +47,37 @@ const PostJob = () => {
       const skillsArray = requiredSkills.split(",").map(s => s.trim()).filter(s => s);
       const techArray = techStack.split(",").map(s => s.trim()).filter(s => s);
 
-      const { error } = await supabase.from("jobs").insert({
-        recruiter_id: user.id,
+      // Validate input with zod
+      const validationResult = jobSchema.safeParse({
         title,
         description,
         required_skills: skillsArray,
         tech_stack: techArray,
         pay_per_hour: parseFloat(payPerHour),
         experience_level: experienceLevel,
-        location: location || null,
+        location: location || undefined,
+      });
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast({
+          title: "Invalid input",
+          description: firstError.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.from("jobs").insert({
+        recruiter_id: user.id,
+        title: validationResult.data.title,
+        description: validationResult.data.description,
+        required_skills: validationResult.data.required_skills,
+        tech_stack: validationResult.data.tech_stack,
+        pay_per_hour: validationResult.data.pay_per_hour,
+        experience_level: validationResult.data.experience_level,
+        location: validationResult.data.location || null,
       });
 
       if (error) throw error;

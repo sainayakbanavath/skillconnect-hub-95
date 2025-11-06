@@ -9,6 +9,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { User, Session } from "@supabase/supabase-js";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password must be less than 100 characters"),
+});
+
+const signupSchema = z.object({
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password must be less than 100 characters"),
+  full_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
+  role: z.enum(["freelancer", "recruiter"]),
+});
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -69,9 +82,26 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Validate input with zod
+      const validationResult = loginSchema.safeParse({
         email,
         password,
+      });
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast({
+          title: "Invalid input",
+          description: firstError.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: validationResult.data.email,
+        password: validationResult.data.password,
       });
 
       if (error) throw error;
@@ -96,16 +126,35 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate input with zod
+      const validationResult = signupSchema.safeParse({
+        email,
+        password,
+        full_name: fullName,
+        role,
+      });
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast({
+          title: "Invalid input",
+          description: firstError.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const redirectUrl = `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: validationResult.data.email,
+        password: validationResult.data.password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName,
-            role: role,
+            full_name: validationResult.data.full_name,
+            role: validationResult.data.role,
           },
         },
       });

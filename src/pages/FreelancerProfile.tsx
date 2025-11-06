@@ -8,6 +8,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
+import { z } from "zod";
+
+const profileSchema = z.object({
+  bio: z.string().trim().max(2000, "Bio must be less than 2000 characters").optional(),
+  education: z.string().trim().max(2000, "Education must be less than 2000 characters").optional(),
+  experience: z.string().trim().max(5000, "Experience must be less than 5000 characters").optional(),
+  skills: z.array(z.string().trim().min(1).max(50)).max(30, "Maximum 30 skills allowed"),
+  tech_stack: z.array(z.string().trim().max(50)).max(30, "Maximum 30 tech items allowed"),
+  hourly_rate: z.number().positive("Hourly rate must be positive").max(10000, "Rate must be less than $10,000/hour").optional(),
+  years_of_experience: z.number().int().min(0, "Years must be 0 or more").max(100, "Years must be less than 100").optional(),
+  portfolio_url: z.string().trim().url("Invalid portfolio URL").max(500).optional().or(z.literal("")),
+  github_url: z.string().trim().url("Invalid GitHub URL").max(500).optional().or(z.literal("")),
+  linkedin_url: z.string().trim().url("Invalid LinkedIn URL").max(500).optional().or(z.literal("")),
+});
 
 const FreelancerProfile = () => {
   const [loading, setLoading] = useState(false);
@@ -76,18 +90,43 @@ const FreelancerProfile = () => {
       const skillsArray = skills.split(",").map(s => s.trim()).filter(s => s);
       const techArray = techStack.split(",").map(s => s.trim()).filter(s => s);
 
-      const profileData = {
-        user_id: user.id,
-        bio,
-        education,
-        experience,
+      // Validate input with zod
+      const validationResult = profileSchema.safeParse({
+        bio: bio || undefined,
+        education: education || undefined,
+        experience: experience || undefined,
         skills: skillsArray,
         tech_stack: techArray,
-        hourly_rate: hourlyRate ? parseFloat(hourlyRate) : null,
-        years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : null,
-        portfolio_url: portfolioUrl || null,
-        github_url: githubUrl || null,
-        linkedin_url: linkedinUrl || null,
+        hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+        years_of_experience: yearsOfExperience ? parseInt(yearsOfExperience) : undefined,
+        portfolio_url: portfolioUrl || "",
+        github_url: githubUrl || "",
+        linkedin_url: linkedinUrl || "",
+      });
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast({
+          title: "Invalid input",
+          description: firstError.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const profileData = {
+        user_id: user.id,
+        bio: validationResult.data.bio || null,
+        education: validationResult.data.education || null,
+        experience: validationResult.data.experience || null,
+        skills: validationResult.data.skills,
+        tech_stack: validationResult.data.tech_stack,
+        hourly_rate: validationResult.data.hourly_rate || null,
+        years_of_experience: validationResult.data.years_of_experience || null,
+        portfolio_url: validationResult.data.portfolio_url || null,
+        github_url: validationResult.data.github_url || null,
+        linkedin_url: validationResult.data.linkedin_url || null,
       };
 
       const { error } = await supabase
