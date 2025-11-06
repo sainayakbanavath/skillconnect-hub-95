@@ -73,7 +73,12 @@ const Auth = () => {
         navigate(profile.role === "freelancer" ? "/freelancer" : "/recruiter");
       }
     } catch (error) {
-      console.error("Error checking user role:", error);
+      // User-facing generic message only, no sensitive details
+      toast({
+        title: "Unable to verify user role",
+        description: "Please try logging in again",
+        variant: "destructive",
+      });
     }
   };
 
