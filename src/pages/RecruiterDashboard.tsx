@@ -53,13 +53,13 @@ const RecruiterDashboard = () => {
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
+    const { data: userRole } = await supabase
+      .from("user_roles")
       .select("role")
-      .eq("id", user.id)
+      .eq("user_id", user.id)
       .single();
 
-    if (profile?.role !== "recruiter") {
+    if (userRole?.role !== "recruiter") {
       navigate("/freelancer");
       return;
     }

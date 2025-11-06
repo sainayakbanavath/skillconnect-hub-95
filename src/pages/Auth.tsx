@@ -63,14 +63,14 @@ const Auth = () => {
 
   const checkUserRoleAndRedirect = async (userId: string) => {
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
+      const { data: userRole } = await supabase
+        .from("user_roles")
         .select("role")
-        .eq("id", userId)
+        .eq("user_id", userId)
         .single();
 
-      if (profile) {
-        navigate(profile.role === "freelancer" ? "/freelancer" : "/recruiter");
+      if (userRole) {
+        navigate(userRole.role === "freelancer" ? "/freelancer" : "/recruiter");
       }
     } catch (error) {
       // User-facing generic message only, no sensitive details
