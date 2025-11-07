@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Briefcase, DollarSign, MapPin, LogOut, User, Clock } from "lucide-react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import { ApplyJobDialog } from "@/components/ApplyJobDialog";
 
 interface Job {
   id: string;
@@ -37,6 +38,8 @@ const FreelancerDashboard = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<{ id: string; title: string } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -120,44 +123,9 @@ const FreelancerDashboard = () => {
     }
   };
 
-  const handleApply = async (jobId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from("applications")
-        .insert({
-          job_id: jobId,
-          freelancer_id: user.id,
-        });
-
-      if (error) {
-        if (error.code === "23505") {
-          toast({
-            title: "Already applied",
-            description: "You have already applied to this job.",
-            variant: "destructive",
-          });
-        } else {
-          throw error;
-        }
-        return;
-      }
-
-      toast({
-        title: "Application submitted!",
-        description: "The recruiter will review your application.",
-      });
-
-      fetchApplications();
-    } catch (error: any) {
-      toast({
-        title: "Error submitting application",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+  const handleApply = (jobId: string, jobTitle: string) => {
+    setSelectedJob({ id: jobId, title: jobTitle });
+    setApplyDialogOpen(true);
   };
 
   const handleLogout = async () => {
@@ -294,7 +262,7 @@ const FreelancerDashboard = () => {
                   )}
 
                   <Button
-                    onClick={() => handleApply(job.id)}
+                    onClick={() => handleApply(job.id, job.title)}
                     className="w-full"
                     disabled={applications.some((app) => app.jobs.title === job.title)}
                   >
@@ -318,6 +286,16 @@ const FreelancerDashboard = () => {
           )}
         </section>
       </main>
+
+      {selectedJob && (
+        <ApplyJobDialog
+          open={applyDialogOpen}
+          onOpenChange={setApplyDialogOpen}
+          jobId={selectedJob.id}
+          jobTitle={selectedJob.title}
+          onSuccess={fetchApplications}
+        />
+      )}
     </div>
   );
 };

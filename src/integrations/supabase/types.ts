@@ -21,6 +21,7 @@ export type Database = {
           freelancer_id: string
           id: string
           job_id: string
+          resume_url: string | null
           status: string
           updated_at: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           freelancer_id: string
           id?: string
           job_id: string
+          resume_url?: string | null
           status?: string
           updated_at?: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           freelancer_id?: string
           id?: string
           job_id?: string
+          resume_url?: string | null
           status?: string
           updated_at?: string
         }

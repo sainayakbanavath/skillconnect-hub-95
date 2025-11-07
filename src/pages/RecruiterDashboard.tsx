@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, LogOut, Briefcase, Users, CheckCircle, XCircle } from "lucide-react";
+import { Plus, LogOut, Briefcase, Users, CheckCircle, XCircle, FileText, Download } from "lucide-react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Job {
@@ -23,6 +23,7 @@ interface Application {
   id: string;
   status: string;
   applied_at: string;
+  resume_url: string | null;
   jobs: {
     title: string;
   };
@@ -169,6 +170,37 @@ const RecruiterDashboard = () => {
     }
   };
 
+  const handleDownloadResume = async (resumeUrl: string, applicantName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('resumes')
+        .download(resumeUrl);
+
+      if (error) throw error;
+
+      // Create a download link
+      const url = window.URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${applicantName.replace(/\s+/g, '_')}_resume.${resumeUrl.split('.').pop()}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Resume downloaded",
+        description: "The resume has been downloaded successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error downloading resume",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
@@ -275,6 +307,19 @@ const RecruiterDashboard = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Applied on {new Date(app.applied_at).toLocaleDateString()}
                   </p>
+                  
+                  {app.resume_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadResume(app.resume_url!, app.profiles.full_name)}
+                      className="mb-4"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Resume
+                    </Button>
+                  )}
+                  
                   {app.status === "pending" && (
                     <div className="flex gap-2">
                       <Button
