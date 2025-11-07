@@ -1,1 +1,4 @@
 project_id = "tssbfvquiwjlvhehvxpe"
+
+[functions.send-application-status]
+verify_jwt = false

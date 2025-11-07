@@ -125,6 +125,13 @@ const RecruiterDashboard = () => {
 
   const handleApplicationStatus = async (applicationId: string, status: "accepted" | "rejected") => {
     try {
+      // Get application details before updating
+      const application = applications.find(app => app.id === applicationId);
+      if (!application) {
+        throw new Error("Application not found");
+      }
+
+      // Update application status
       const { error } = await supabase
         .from("applications")
         .update({ status })
@@ -132,9 +139,24 @@ const RecruiterDashboard = () => {
 
       if (error) throw error;
 
+      // Send email notification
+      try {
+        await supabase.functions.invoke("send-application-status", {
+          body: {
+            freelancerEmail: application.profiles.email,
+            freelancerName: application.profiles.full_name,
+            jobTitle: application.jobs.title,
+            status: status,
+          },
+        });
+      } catch (emailError: any) {
+        console.error("Failed to send email:", emailError);
+        // Don't fail the whole operation if email fails
+      }
+
       toast({
         title: `Application ${status}`,
-        description: `You have ${status} this application.`,
+        description: `The applicant has been notified via email.`,
       });
 
       fetchApplications();
