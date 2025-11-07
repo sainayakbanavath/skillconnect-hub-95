@@ -166,12 +166,20 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
-      });
-
-      setIsLogin(true);
+      // If signup is successful and email confirmation is disabled,
+      // user will be automatically logged in
+      if (data.user && data.session) {
+        toast({
+          title: "Welcome to SkillConnect!",
+          description: "Your account has been created successfully.",
+        });
+      } else {
+        toast({
+          title: "Account created!",
+          description: "You can now log in with your credentials.",
+        });
+        setIsLogin(true);
+      }
     } catch (error: any) {
       toast({
         title: "Signup failed",
