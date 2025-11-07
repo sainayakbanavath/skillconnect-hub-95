@@ -293,7 +293,7 @@ const RecruiterDashboard = () => {
                     <Badge
                       className={
                         app.status === "accepted"
-                          ? "bg-success text-success-foreground"
+                          ? "bg-green-600 text-white hover:bg-green-600"
                           : app.status === "rejected"
                           ? "bg-destructive text-destructive-foreground"
                           : ""
@@ -325,7 +325,7 @@ const RecruiterDashboard = () => {
                       <Button
                         size="sm"
                         onClick={() => handleApplicationStatus(app.id, "accepted")}
-                        className="bg-success hover:bg-success/90"
+                        className="bg-green-600 hover:bg-green-700 text-white"
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Accept
@@ -338,6 +338,20 @@ const RecruiterDashboard = () => {
                         <XCircle className="mr-2 h-4 w-4" />
                         Reject
                       </Button>
+                    </div>
+                  )}
+                  
+                  {app.status === "accepted" && (
+                    <div className="flex items-center gap-2 text-green-600 font-medium">
+                      <CheckCircle className="h-5 w-5" />
+                      <span>Application Accepted</span>
+                    </div>
+                  )}
+                  
+                  {app.status === "rejected" && (
+                    <div className="flex items-center gap-2 text-destructive font-medium">
+                      <XCircle className="h-5 w-5" />
+                      <span>Application Rejected</span>
                     </div>
                   )}
                 </CardContent>
