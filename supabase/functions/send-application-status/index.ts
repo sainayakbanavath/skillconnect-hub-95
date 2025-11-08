@@ -161,7 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Authorization": `Bearer ${resend_api_key}`,
       },
       body: JSON.stringify({
-        from: "SkillConnect <onboarding@resend.dev>",
+        from: "SkillConnect <noreply@sainayakbanavath.com>",
         to: [freelancerEmail],
         subject: subject,
         html: html,
