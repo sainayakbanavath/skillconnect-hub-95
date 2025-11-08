@@ -21,7 +21,7 @@ interface Job {
   created_at: string;
   profiles: {
     full_name: string;
-  };
+  } | null;
 }
 
 interface Application {
@@ -212,7 +212,7 @@ const FreelancerDashboard = () => {
                     <div>
                       <CardTitle className="text-xl mb-1">{job.title}</CardTitle>
                       <CardDescription>
-                        Posted by {job.profiles.full_name}
+                        Posted by {job.profiles?.full_name || 'Unknown Recruiter'}
                       </CardDescription>
                     </div>
                     <Badge variant="outline" className="capitalize">
