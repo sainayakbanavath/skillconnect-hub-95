@@ -282,12 +282,12 @@ const RecruiterDashboard = () => {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg">{app.profiles.full_name}</CardTitle>
+                      <CardTitle className="text-lg">{app.profiles?.full_name || 'Unknown Applicant'}</CardTitle>
                       <CardDescription>
                         Applied for: {app.jobs.title}
                       </CardDescription>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {app.profiles.email}
+                        {app.profiles?.email || 'No email available'}
                       </p>
                     </div>
                     <Badge
@@ -308,7 +308,7 @@ const RecruiterDashboard = () => {
                     Applied on {new Date(app.applied_at).toLocaleDateString()}
                   </p>
                   
-                  {app.resume_url && (
+                  {app.resume_url && app.profiles && (
                     <Button
                       variant="outline"
                       size="sm"
