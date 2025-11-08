@@ -5,7 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, LogOut, Briefcase, Users, CheckCircle, XCircle, FileText, Download } from "lucide-react";
+import { Plus, LogOut, Briefcase, Users, CheckCircle, XCircle, FileText, Download, Edit, Trash2 } from "lucide-react";
+import { EditJobDialog } from "@/components/EditJobDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Job {
@@ -13,8 +24,10 @@ interface Job {
   title: string;
   description: string;
   required_skills: string[];
+  tech_stack: string[];
   pay_per_hour: number;
   experience_level: string;
+  location: string;
   is_active: boolean;
   created_at: string;
 }
@@ -38,6 +51,9 @@ const RecruiterDashboard = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editJobDialogOpen, setEditJobDialogOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -198,6 +214,39 @@ const RecruiterDashboard = () => {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleEditJob = (job: Job) => {
+    setSelectedJob(job);
+    setEditJobDialogOpen(true);
+  };
+
+  const handleDeleteJob = async () => {
+    if (!deleteJobId) return;
+
+    try {
+      const { error } = await supabase
+        .from("jobs")
+        .delete()
+        .eq("id", deleteJobId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Job deleted",
+        description: "Your job posting has been deleted successfully.",
+      });
+
+      fetchJobs();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting job",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteJobId(null);
     }
   };
 
@@ -384,11 +433,31 @@ const RecruiterDashboard = () => {
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                     {job.description}
                   </p>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <span className="text-sm font-medium">${job.pay_per_hour}/hour</span>
                     <Badge variant="outline" className="capitalize">
                       {job.experience_level}
                     </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditJob(job)}
+                      className="flex-1"
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setDeleteJobId(job.id)}
+                      className="flex-1"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -409,6 +478,33 @@ const RecruiterDashboard = () => {
           )}
         </section>
       </main>
+
+      {selectedJob && (
+        <EditJobDialog
+          open={editJobDialogOpen}
+          onOpenChange={setEditJobDialogOpen}
+          job={selectedJob}
+          onSuccess={fetchJobs}
+        />
+      )}
+
+      <AlertDialog open={!!deleteJobId} onOpenChange={(open) => !open && setDeleteJobId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this job posting and all associated applications.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteJob} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

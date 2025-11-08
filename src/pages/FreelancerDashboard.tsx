@@ -5,7 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Briefcase, DollarSign, MapPin, LogOut, User, Clock } from "lucide-react";
+import { Briefcase, DollarSign, MapPin, LogOut, User, Clock, Edit, Trash2 } from "lucide-react";
+import { EditApplicationDialog } from "@/components/EditApplicationDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { ApplyJobDialog } from "@/components/ApplyJobDialog";
 
@@ -28,6 +39,7 @@ interface Application {
   id: string;
   status: string;
   applied_at: string;
+  cover_letter: string | null;
   jobs: {
     title: string;
   };
@@ -40,6 +52,9 @@ const FreelancerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<{ id: string; title: string } | null>(null);
+  const [editApplicationDialogOpen, setEditApplicationDialogOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [withdrawApplicationId, setWithdrawApplicationId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -128,6 +143,39 @@ const FreelancerDashboard = () => {
     setApplyDialogOpen(true);
   };
 
+  const handleEditApplication = (application: Application) => {
+    setSelectedApplication(application);
+    setEditApplicationDialogOpen(true);
+  };
+
+  const handleWithdrawApplication = async () => {
+    if (!withdrawApplicationId) return;
+
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .delete()
+        .eq("id", withdrawApplicationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Application withdrawn",
+        description: "Your application has been withdrawn successfully.",
+      });
+
+      fetchApplications();
+    } catch (error: any) {
+      toast({
+        title: "Error withdrawing application",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setWithdrawApplicationId(null);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
@@ -195,6 +243,29 @@ const FreelancerDashboard = () => {
                     <Badge className={getStatusColor(app.status)}>
                       {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                     </Badge>
+                    
+                    {app.status === "pending" && (
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditApplication(app)}
+                          className="flex-1"
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setWithdrawApplicationId(app.id)}
+                          className="flex-1"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Withdraw
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -296,6 +367,32 @@ const FreelancerDashboard = () => {
           onSuccess={fetchApplications}
         />
       )}
+
+      {selectedApplication && (
+        <EditApplicationDialog
+          open={editApplicationDialogOpen}
+          onOpenChange={setEditApplicationDialogOpen}
+          application={selectedApplication}
+          onSuccess={fetchApplications}
+        />
+      )}
+
+      <AlertDialog open={!!withdrawApplicationId} onOpenChange={(open) => !open && setWithdrawApplicationId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to withdraw this application? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleWithdrawApplication} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Withdraw
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
