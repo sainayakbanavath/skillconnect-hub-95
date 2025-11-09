@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Briefcase, DollarSign, MapPin, LogOut, User, Clock, Edit, Trash2 } from "lucide-react";
+import { Briefcase, LogOut, User } from "lucide-react";
 import { EditApplicationDialog } from "@/components/EditApplicationDialog";
+import { JobCard } from "@/components/JobCard";
+import { ApplicationCard } from "@/components/ApplicationCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,9 +60,11 @@ const FreelancerDashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAuth();
-    fetchJobs();
-    fetchApplications();
+    const init = async () => {
+      await checkAuth();
+      await Promise.all([fetchJobs(), fetchApplications()]);
+    };
+    init();
   }, []);
 
   const checkAuth = async () => {
@@ -138,17 +141,17 @@ const FreelancerDashboard = () => {
     }
   };
 
-  const handleApply = (jobId: string, jobTitle: string) => {
+  const handleApply = useCallback((jobId: string, jobTitle: string) => {
     setSelectedJob({ id: jobId, title: jobTitle });
     setApplyDialogOpen(true);
-  };
+  }, []);
 
-  const handleEditApplication = (application: Application) => {
+  const handleEditApplication = useCallback((application: Application) => {
     setSelectedApplication(application);
     setEditApplicationDialogOpen(true);
-  };
+  }, []);
 
-  const handleWithdrawApplication = async () => {
+  const handleWithdrawApplication = useCallback(async () => {
     if (!withdrawApplicationId) return;
 
     try {
@@ -174,23 +177,12 @@ const FreelancerDashboard = () => {
     } finally {
       setWithdrawApplicationId(null);
     }
-  };
+  }, [withdrawApplicationId, toast]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
     navigate("/auth");
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "accepted":
-        return "bg-success text-success-foreground";
-      case "rejected":
-        return "bg-destructive text-destructive-foreground";
-      default:
-        return "bg-secondary text-secondary-foreground";
-    }
-  };
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -231,43 +223,12 @@ const FreelancerDashboard = () => {
             <h3 className="text-2xl font-semibold mb-4">My Applications</h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {applications.map((app) => (
-                <Card key={app.id}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{app.jobs.title}</CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Applied {new Date(app.applied_at).toLocaleDateString()}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Badge className={getStatusColor(app.status)}>
-                      {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                    </Badge>
-                    
-                    {app.status === "pending" && (
-                      <div className="flex gap-2 mt-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditApplication(app)}
-                          className="flex-1"
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setWithdrawApplicationId(app.id)}
-                          className="flex-1"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Withdraw
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <ApplicationCard
+                  key={app.id}
+                  application={app}
+                  onEdit={handleEditApplication}
+                  onWithdraw={setWithdrawApplicationId}
+                />
               ))}
             </div>
           </section>
@@ -277,73 +238,12 @@ const FreelancerDashboard = () => {
           <h3 className="text-2xl font-semibold mb-4">Available Jobs</h3>
           <div className="grid gap-6 md:grid-cols-2">
             {jobs.map((job) => (
-              <Card key={job.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <CardTitle className="text-xl mb-1">{job.title}</CardTitle>
-                      <CardDescription>
-                        Posted by {job.profiles?.full_name || 'Unknown Recruiter'}
-                      </CardDescription>
-                    </div>
-                    <Badge variant="outline" className="capitalize">
-                      {job.experience_level}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {job.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <DollarSign className="h-4 w-4 text-primary" />
-                    <span className="font-semibold">${job.pay_per_hour}/hour</span>
-                  </div>
-
-                  {job.location && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{job.location}</span>
-                    </div>
-                  )}
-
-                  <div>
-                    <p className="text-sm font-medium mb-2">Required Skills:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {job.required_skills.map((skill, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {job.tech_stack && job.tech_stack.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium mb-2">Tech Stack:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {job.tech_stack.map((tech, idx) => (
-                          <Badge key={idx} variant="outline">
-                            {tech}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Button
-                    onClick={() => handleApply(job.id, job.title)}
-                    className="w-full"
-                    disabled={applications.some((app) => app.jobs.title === job.title)}
-                  >
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    {applications.some((app) => app.jobs.title === job.title)
-                      ? "Already Applied"
-                      : "I'm Interested"}
-                  </Button>
-                </CardContent>
-              </Card>
+              <JobCard
+                key={job.id}
+                job={job}
+                isApplied={applications.some((app) => app.jobs.title === job.title)}
+                onApply={handleApply}
+              />
             ))}
           </div>
 

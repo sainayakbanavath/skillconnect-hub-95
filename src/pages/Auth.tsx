@@ -63,16 +63,19 @@ const Auth = () => {
 
   const checkUserRoleAndRedirect = async (userId: string) => {
     try {
-      const { data: userRole } = await supabase
+      const { data: userRole, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
+
+      if (error) throw error;
 
       if (userRole) {
         navigate(userRole.role === "freelancer" ? "/freelancer" : "/recruiter");
       }
     } catch (error) {
+      console.error("Role check error:", error);
       // User-facing generic message only, no sensitive details
       toast({
         title: "Unable to verify user role",

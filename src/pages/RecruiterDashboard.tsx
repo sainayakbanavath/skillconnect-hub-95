@@ -58,9 +58,11 @@ const RecruiterDashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAuth();
-    fetchJobs();
-    fetchApplications();
+    const init = async () => {
+      await checkAuth();
+      await Promise.all([fetchJobs(), fetchApplications()]);
+    };
+    init();
   }, []);
 
   const checkAuth = async () => {
@@ -342,10 +344,10 @@ const RecruiterDashboard = () => {
                     <Badge
                       className={
                         app.status === "accepted"
-                          ? "bg-green-600 text-white hover:bg-green-600"
+                          ? "bg-success text-success-foreground hover:bg-success"
                           : app.status === "rejected"
-                          ? "bg-destructive text-destructive-foreground"
-                          : ""
+                          ? "bg-destructive text-destructive-foreground hover:bg-destructive"
+                          : "bg-secondary text-secondary-foreground"
                       }
                     >
                       {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
@@ -374,7 +376,7 @@ const RecruiterDashboard = () => {
                       <Button
                         size="sm"
                         onClick={() => handleApplicationStatus(app.id, "accepted")}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-success hover:bg-success/90 text-success-foreground"
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Accept
@@ -391,7 +393,7 @@ const RecruiterDashboard = () => {
                   )}
                   
                   {app.status === "accepted" && (
-                    <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <div className="flex items-center gap-2 text-success font-medium">
                       <CheckCircle className="h-5 w-5" />
                       <span>Application Accepted</span>
                     </div>
