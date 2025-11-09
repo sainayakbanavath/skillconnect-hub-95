@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const resend_api_key = Deno.env.get("RESEND_API_KEY");
+const RESEND_FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL");
+const RESEND_TEST_RECIPIENT = Deno.env.get("RESEND_TEST_RECIPIENT");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -154,19 +156,27 @@ const handler = async (req: Request): Promise<Response> => {
         </html>
       `;
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${resend_api_key}`,
-      },
-      body: JSON.stringify({
-        from: "SkillConnect <onboarding@resend.dev>",
-        to: [freelancerEmail],
-        subject: subject,
-        html: html,
-      }),
-    });
+// Determine sender and recipient with sandbox fallback
+const fromEmail = RESEND_FROM_EMAIL ?? "SkillConnect <onboarding@resend.dev>";
+const usingOnboarding = fromEmail.includes("onboarding@resend.dev");
+const recipient = usingOnboarding && RESEND_TEST_RECIPIENT ? RESEND_TEST_RECIPIENT : freelancerEmail;
+const htmlToSend = usingOnboarding && RESEND_TEST_RECIPIENT && recipient !== freelancerEmail
+  ? `${html}<p style="color:#6b7280;font-size:12px;margin-top:16px;">[Sandbox mode] Originally intended for: ${freelancerEmail}</p>`
+  : html;
+
+const emailResponse = await fetch("https://api.resend.com/emails", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${resend_api_key}`,
+  },
+  body: JSON.stringify({
+    from: fromEmail,
+    to: [recipient],
+    subject: subject,
+    html: htmlToSend,
+  }),
+});
 
     if (!emailResponse.ok) {
       const errorData = await emailResponse.json();
@@ -177,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", emailData);
 
-    return new Response(JSON.stringify({ success: true, emailData }), {
+return new Response(JSON.stringify({ success: true, emailData, sent_to: recipient, sandbox: recipient !== freelancerEmail }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
