@@ -54,6 +54,7 @@ const RecruiterDashboard = () => {
   const [editJobDialogOpen, setEditJobDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -143,11 +144,18 @@ const RecruiterDashboard = () => {
   };
 
   const handleApplicationStatus = async (applicationId: string, status: "accepted" | "rejected") => {
+    if (processingId) return;
+    setProcessingId(applicationId);
     try {
       // Get application details before updating
       const application = applications.find(app => app.id === applicationId);
       if (!application) {
         throw new Error("Application not found");
+      }
+
+      // Avoid duplicate updates
+      if (application.status === status) {
+        return;
       }
 
       // Update application status
@@ -158,14 +166,14 @@ const RecruiterDashboard = () => {
 
       if (error) throw error;
 
-      // Send email notification
+      // Send email notification (non-blocking for UI)
       try {
         await supabase.functions.invoke("send-application-status", {
           body: {
             freelancerEmail: application.profiles.email,
             freelancerName: application.profiles.full_name,
             jobTitle: application.jobs.title,
-            status: status,
+            status,
           },
         });
       } catch (emailError: any) {
@@ -185,6 +193,8 @@ const RecruiterDashboard = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -377,6 +387,7 @@ const RecruiterDashboard = () => {
                         size="sm"
                         onClick={() => handleApplicationStatus(app.id, "accepted")}
                         className="bg-success hover:bg-success/90 text-success-foreground"
+                        disabled={processingId === app.id}
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Accept

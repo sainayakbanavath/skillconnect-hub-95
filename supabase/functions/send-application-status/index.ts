@@ -164,36 +164,78 @@ const htmlToSend = usingOnboarding && RESEND_TEST_RECIPIENT && recipient !== fre
   ? `${html}<p style="color:#6b7280;font-size:12px;margin-top:16px;">[Sandbox mode] Originally intended for: ${freelancerEmail}</p>`
   : html;
 
-const emailResponse = await fetch("https://api.resend.com/emails", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${resend_api_key}`,
-  },
-  body: JSON.stringify({
-    from: fromEmail,
-    to: [recipient],
-    subject: subject,
-    html: htmlToSend,
-  }),
-});
+// Helper to send email
+const sendEmail = async (from: string, to: string, subj: string, htmlBody: string) => {
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${resend_api_key}`,
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject: subj,
+      html: htmlBody,
+    }),
+  });
+  let data: any = null;
+  try { data = await resp.json(); } catch { data = null; }
+  return { resp, data } as const;
+};
 
-    if (!emailResponse.ok) {
-      const errorData = await emailResponse.json();
-      throw new Error(`Resend API error: ${JSON.stringify(errorData)}`);
+// Retry on 429 and fallback on unverified domain (403)
+const sendWithRetry = async (from: string, to: string, subj: string, htmlBody: string) => {
+  let attempt = 0;
+  let lastData: any = null;
+  while (attempt < 3) {
+    const { resp, data } = await sendEmail(from, to, subj, htmlBody);
+    lastData = data;
+    if (resp.ok) {
+      return { data, sent_to: to, from, sandbox: to !== freelancerEmail };
     }
 
-    const emailData = await emailResponse.json();
+    if (resp.status === 429) {
+      const delay = 500 * Math.pow(2, attempt);
+      await new Promise((r) => setTimeout(r, delay));
+      attempt++;
+      continue;
+    }
 
-    console.log("Email sent successfully:", emailData);
+    const message = String(data?.message || data?.error?.message || "").toLowerCase();
+    if (resp.status === 403 && message.includes("domain is not verified")) {
+      const fallbackFrom = "SkillConnect <onboarding@resend.dev>";
+      const fallbackTo = RESEND_TEST_RECIPIENT || to;
+      const fallbackHtml = RESEND_TEST_RECIPIENT && fallbackTo !== to
+        ? `${htmlBody}<p style=\"color:#6b7280;font-size:12px;margin-top:16px;\">[Sandbox mode] Originally intended for: ${to}</p>`
+        : htmlBody;
+      const { resp: fResp, data: fData } = await sendEmail(fallbackFrom, fallbackTo, subj, fallbackHtml);
+      if (fResp.ok) {
+        return { data: fData, sent_to: fallbackTo, from: fallbackFrom, sandbox: fallbackTo !== freelancerEmail };
+      }
+      throw new Error(`Resend API error: ${JSON.stringify(fData)}`);
+    }
 
-return new Response(JSON.stringify({ success: true, emailData, sent_to: recipient, sandbox: recipient !== freelancerEmail }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
+    // Non-retryable errors
+    throw new Error(`Resend API error: ${JSON.stringify(data)}`);
+  }
+  throw new Error(`Resend API error: rate_limit_exceeded after retries: ${JSON.stringify(lastData)}`);
+};
+
+const result = await sendWithRetry(fromEmail, recipient, subject, htmlToSend);
+
+console.log("Email sent successfully:", result.data);
+
+return new Response(
+  JSON.stringify({ success: true, emailData: result.data, sent_to: result.sent_to, from: result.from, sandbox: result.sandbox }),
+  {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      ...corsHeaders,
+    },
+  }
+);
   } catch (error: any) {
     console.error("Error in send-application-status function:", error);
     return new Response(
