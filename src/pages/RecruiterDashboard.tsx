@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, LogOut, Briefcase, Users, CheckCircle, XCircle, FileText, Download, Edit, Trash2 } from "lucide-react";
 import { EditJobDialog } from "@/components/EditJobDialog";
+// This is a code
 import {
   AlertDialog,
   AlertDialogAction,

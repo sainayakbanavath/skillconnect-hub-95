@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Briefcase, LogOut, User } from "lucide-react";
+// This is a code
 import { EditApplicationDialog } from "@/components/EditApplicationDialog";
 import { JobCard } from "@/components/JobCard";
 import { ApplicationCard } from "@/components/ApplicationCard";

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText } from "lucide-react";
-
+// This is a code
 interface ApplyJobDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

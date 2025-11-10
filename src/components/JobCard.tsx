@@ -17,7 +17,7 @@ interface Job {
     full_name: string;
   } | null;
 }
-
+// This is a code
 interface JobCardProps {
   job: Job;
   isApplied: boolean;

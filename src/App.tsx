@@ -10,7 +10,7 @@ import FreelancerProfile from "./pages/FreelancerProfile";
 import RecruiterDashboard from "./pages/RecruiterDashboard";
 import PostJob from "./pages/PostJob";
 import NotFound from "./pages/NotFound";
-
+// This is a code
 const queryClient = new QueryClient();
 
 const App = () => (

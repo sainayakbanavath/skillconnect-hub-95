@@ -13,7 +13,7 @@ interface Application {
     title: string;
   };
 }
-
+// This is a code
 interface ApplicationCardProps {
   application: Application;
   onEdit: (app: Application) => void;

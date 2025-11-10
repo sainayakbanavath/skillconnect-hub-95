@@ -6,6 +6,7 @@ import { Briefcase, Users, Zap, ArrowRight, CheckCircle } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  // This is a code
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background">

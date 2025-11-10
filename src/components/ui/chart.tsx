@@ -16,7 +16,7 @@ export type ChartConfig = {
 type ChartContextProps = {
   config: ChartConfig;
 };
-
+// This is a single-line comment 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
 function useChart() {
