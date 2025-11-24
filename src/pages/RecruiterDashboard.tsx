@@ -277,18 +277,18 @@ const RecruiterDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
+      <header className="border-b bg-card/80 backdrop-blur-lg shadow-lg sticky top-0 z-10 animate-slide-in-left">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-glow">
             SkillConnect
           </h1>
           <div className="flex items-center gap-4">
-            <Button onClick={() => navigate("/recruiter/post-job")}>
+            <Button onClick={() => navigate("/recruiter/post-job")} variant="gradient" className="shadow-lg shadow-primary/20">
               <Plus className="mr-2 h-4 w-4" />
               Post Job
             </Button>
-            <Button variant="ghost" onClick={handleLogout}>
+            <Button variant="ghost" onClick={handleLogout} className="hover:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
@@ -297,54 +297,61 @@ const RecruiterDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Recruiter Dashboard</h2>
-          <p className="text-muted-foreground">Manage your job postings and applications</p>
+        <div className="mb-8 animate-fade-in-up">
+          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            Recruiter Dashboard
+          </h2>
+          <p className="text-lg text-muted-foreground">Manage your job postings and applications</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <Card>
+          <Card className="group hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:scale-105 border-2 hover:border-primary/30 bg-gradient-to-br from-card to-primary/5 backdrop-blur-sm animate-bounce-in">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
+              <Briefcase className="h-5 w-5 text-primary animate-pulse" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{jobs.filter(j => j.is_active).length}</div>
+              <div className="text-3xl font-bold text-primary">{jobs.filter(j => j.is_active).length}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="group hover:shadow-xl hover:shadow-secondary/10 transition-all duration-300 hover:scale-105 border-2 hover:border-secondary/30 bg-gradient-to-br from-card to-secondary/5 backdrop-blur-sm animate-bounce-in" style={{ animationDelay: '100ms' }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-5 w-5 text-secondary animate-pulse" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{applications.length}</div>
+              <div className="text-3xl font-bold text-secondary">{applications.length}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="group hover:shadow-xl hover:shadow-accent/10 transition-all duration-300 hover:scale-105 border-2 hover:border-accent/30 bg-gradient-to-br from-card to-accent/5 backdrop-blur-sm animate-bounce-in" style={{ animationDelay: '200ms' }}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-5 w-5 text-accent animate-pulse" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-accent">
                 {applications.filter(a => a.status === "pending").length}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <section className="mb-12">
-          <h3 className="text-2xl font-semibold mb-4">Recent Applications</h3>
+        <section className="mb-12 animate-fade-in" style={{ animationDelay: '200ms' }}>
+          <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+            <span className="h-1 w-12 bg-gradient-to-r from-accent to-primary rounded-full" />
+            Recent Applications
+          </h3>
           <div className="space-y-4">
-            {applications.map((app) => (
-              <Card key={app.id}>
+            {applications.map((app, idx) => (
+              <Card key={app.id} className="group hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:scale-[1.01] border-2 hover:border-primary/20 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: `${idx * 50}ms` }}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg">{app.profiles?.full_name || 'Unknown Applicant'}</CardTitle>
+                      <CardTitle className="text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                        {app.profiles?.full_name || 'Unknown Applicant'}
+                      </CardTitle>
                       <CardDescription>
                         Applied for: {app.jobs.title}
                       </CardDescription>
@@ -355,10 +362,10 @@ const RecruiterDashboard = () => {
                     <Badge
                       className={
                         app.status === "accepted"
-                          ? "bg-success text-success-foreground hover:bg-success"
+                          ? "bg-gradient-to-r from-success to-success/80 text-success-foreground hover:bg-success shadow-lg shadow-success/20 animate-bounce-in"
                           : app.status === "rejected"
-                          ? "bg-destructive text-destructive-foreground hover:bg-destructive"
-                          : "bg-secondary text-secondary-foreground"
+                          ? "bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground hover:bg-destructive shadow-lg shadow-destructive/20 animate-bounce-in"
+                          : "bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground shadow-lg shadow-secondary/20 animate-bounce-in"
                       }
                     >
                       {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
@@ -432,13 +439,18 @@ const RecruiterDashboard = () => {
           )}
         </section>
 
-        <section>
-          <h3 className="text-2xl font-semibold mb-4">My Job Postings</h3>
+        <section className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+          <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+            <span className="h-1 w-12 bg-gradient-to-r from-primary to-accent rounded-full" />
+            My Job Postings
+          </h3>
           <div className="grid gap-6 md:grid-cols-2">
-            {jobs.map((job) => (
-              <Card key={job.id}>
+            {jobs.map((job, idx) => (
+              <Card key={job.id} className="group hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 border-2 hover:border-primary/20 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: `${idx * 75}ms` }}>
                 <CardHeader>
-                  <CardTitle>{job.title}</CardTitle>
+                  <CardTitle className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+                    {job.title}
+                  </CardTitle>
                   <CardDescription>
                     Posted {new Date(job.created_at).toLocaleDateString()}
                   </CardDescription>
