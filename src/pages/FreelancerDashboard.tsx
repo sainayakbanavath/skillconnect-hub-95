@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { ApplyJobDialog } from "@/components/ApplyJobDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Job {
   id: string;
@@ -187,25 +188,51 @@ const FreelancerDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
+        <header className="border-b bg-card/80 backdrop-blur-lg shadow-lg sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="h-8 w-40 bg-gradient-to-r from-primary to-secondary rounded-lg animate-shimmer" />
+            <div className="flex gap-4">
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-24" />
+            </div>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8">
+          <div className="mb-8 space-y-2">
+            <Skeleton className="h-10 w-64 animate-fade-in" />
+            <Skeleton className="h-6 w-48 animate-fade-in" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
+                <CardContent className="p-6 space-y-4">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
+      <header className="border-b bg-card/80 backdrop-blur-lg shadow-lg sticky top-0 z-10 animate-slide-in-left">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-glow">
             SkillConnect
           </h1>
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate("/freelancer/profile")}>
+            <Button variant="outline" onClick={() => navigate("/freelancer/profile")} className="border-primary/30 hover:border-primary hover:shadow-lg hover:shadow-primary/20">
               <User className="mr-2 h-4 w-4" />
               My Profile
             </Button>
-            <Button variant="ghost" onClick={handleLogout}>
+            <Button variant="ghost" onClick={handleLogout} className="hover:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
@@ -214,45 +241,56 @@ const FreelancerDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Welcome back!</h2>
-          <p className="text-muted-foreground">Find your next opportunity</p>
+        <div className="mb-8 animate-fade-in-up">
+          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            Welcome back!
+          </h2>
+          <p className="text-lg text-muted-foreground">Find your next opportunity</p>
         </div>
 
         {applications.length > 0 && (
-          <section className="mb-12">
-            <h3 className="text-2xl font-semibold mb-4">My Applications</h3>
+          <section className="mb-12 animate-fade-in" style={{ animationDelay: '100ms' }}>
+            <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+              <span className="h-1 w-12 bg-gradient-to-r from-primary to-secondary rounded-full" />
+              My Applications
+            </h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {applications.map((app) => (
-                <ApplicationCard
-                  key={app.id}
-                  application={app}
-                  onEdit={handleEditApplication}
-                  onWithdraw={setWithdrawApplicationId}
-                />
+              {applications.map((app, idx) => (
+                <div key={app.id} className="animate-bounce-in" style={{ animationDelay: `${idx * 50}ms` }}>
+                  <ApplicationCard
+                    application={app}
+                    onEdit={handleEditApplication}
+                    onWithdraw={setWithdrawApplicationId}
+                  />
+                </div>
               ))}
             </div>
           </section>
         )}
 
-        <section>
-          <h3 className="text-2xl font-semibold mb-4">Available Jobs</h3>
+        <section className="animate-fade-in" style={{ animationDelay: applications.length > 0 ? '200ms' : '100ms' }}>
+          <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+            <span className="h-1 w-12 bg-gradient-to-r from-secondary to-accent rounded-full" />
+            Available Jobs
+          </h3>
           <div className="grid gap-6 md:grid-cols-2">
-            {jobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                isApplied={applications.some((app) => app.jobs.title === job.title)}
-                onApply={handleApply}
-              />
+            {jobs.map((job, idx) => (
+              <div key={job.id} className="animate-bounce-in" style={{ animationDelay: `${idx * 75}ms` }}>
+                <JobCard
+                  job={job}
+                  isApplied={applications.some((app) => app.jobs.title === job.title)}
+                  onApply={handleApply}
+                />
+              </div>
             ))}
           </div>
 
           {jobs.length === 0 && (
-            <Card>
+            <Card className="border-2 border-dashed border-muted-foreground/20 bg-muted/20 backdrop-blur-sm animate-fade-in">
               <CardContent className="py-12 text-center">
-                <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No jobs available at the moment</p>
+                <Briefcase className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50 animate-bounce" />
+                <p className="text-muted-foreground text-lg">No jobs available at the moment</p>
+                <p className="text-sm text-muted-foreground/70 mt-2">Check back soon for new opportunities!</p>
               </CardContent>
             </Card>
           )}
@@ -279,16 +317,16 @@ const FreelancerDashboard = () => {
       )}
 
       <AlertDialog open={!!withdrawApplicationId} onOpenChange={(open) => !open && setWithdrawApplicationId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-2 border-destructive/20 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-2xl font-bold">Withdraw Application?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
               Are you sure you want to withdraw this application? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleWithdrawApplication} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogCancel className="hover:bg-muted">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleWithdrawApplication} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-lg hover:shadow-destructive/30">
               Withdraw
             </AlertDialogAction>
           </AlertDialogFooter>

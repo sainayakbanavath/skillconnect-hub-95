@@ -26,16 +26,18 @@ interface JobCardProps {
 
 export const JobCard = memo(({ job, isApplied, onApply }: JobCardProps) => {
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="group hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 border-2 hover:border-primary/20 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm animate-fade-in-up">
       <CardHeader>
         <div className="flex justify-between items-start mb-2">
-          <div>
-            <CardTitle className="text-xl mb-1">{job.title}</CardTitle>
-            <CardDescription>
+          <div className="flex-1">
+            <CardTitle className="text-xl mb-1 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+              {job.title}
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
               Posted by {job.profiles?.full_name || 'Unknown Recruiter'}
             </CardDescription>
           </div>
-          <Badge variant="outline" className="capitalize">
+          <Badge variant="outline" className="capitalize bg-primary/10 border-primary/30 text-primary font-semibold">
             {job.experience_level}
           </Badge>
         </div>
@@ -45,23 +47,24 @@ export const JobCard = memo(({ job, isApplied, onApply }: JobCardProps) => {
           {job.description}
         </p>
 
-        <div className="flex items-center gap-2 text-sm">
-          <DollarSign className="h-4 w-4 text-primary" />
-          <span className="font-semibold">${job.pay_per_hour}/hour</span>
+        <div className="flex items-center gap-2 text-sm bg-primary/5 px-3 py-2 rounded-lg border border-primary/10">
+          <DollarSign className="h-5 w-5 text-primary animate-pulse" />
+          <span className="font-bold text-lg text-primary">${job.pay_per_hour}</span>
+          <span className="text-muted-foreground">/hour</span>
         </div>
 
         {job.location && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
+            <MapPin className="h-4 w-4 text-accent" />
             <span>{job.location}</span>
           </div>
         )}
 
         <div>
-          <p className="text-sm font-medium mb-2">Required Skills:</p>
+          <p className="text-sm font-semibold mb-2 text-foreground">Required Skills:</p>
           <div className="flex flex-wrap gap-2">
             {job.required_skills.map((skill, idx) => (
-              <Badge key={idx} variant="secondary">
+              <Badge key={idx} className="bg-secondary/90 text-secondary-foreground hover:bg-secondary transition-colors duration-200 hover:scale-110">
                 {skill}
               </Badge>
             ))}
@@ -70,10 +73,10 @@ export const JobCard = memo(({ job, isApplied, onApply }: JobCardProps) => {
 
         {job.tech_stack && job.tech_stack.length > 0 && (
           <div>
-            <p className="text-sm font-medium mb-2">Tech Stack:</p>
+            <p className="text-sm font-semibold mb-2 text-foreground">Tech Stack:</p>
             <div className="flex flex-wrap gap-2">
               {job.tech_stack.map((tech, idx) => (
-                <Badge key={idx} variant="outline">
+                <Badge key={idx} variant="outline" className="border-accent/50 text-accent hover:bg-accent/10 transition-colors duration-200 hover:scale-110">
                   {tech}
                 </Badge>
               ))}
@@ -83,7 +86,7 @@ export const JobCard = memo(({ job, isApplied, onApply }: JobCardProps) => {
 
         <Button
           onClick={() => onApply(job.id, job.title)}
-          className="w-full"
+          className="w-full bg-gradient-to-r from-primary via-secondary to-accent text-white font-semibold shadow-lg hover:shadow-xl"
           disabled={isApplied}
         >
           <Briefcase className="mr-2 h-4 w-4" />
