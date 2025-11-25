@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Briefcase, LogOut, User, Search, Filter, X, DollarSign, MapPin, Code } from "lucide-react";
+import { Briefcase, LogOut, User, Search, Filter, X, DollarSign, MapPin, Code, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -68,9 +68,32 @@ const FreelancerDashboard = () => {
   const [locationFilter, setLocationFilter] = useState("");
   const [payRateRange, setPayRateRange] = useState<[number, number]>([0, 500]);
   const [showFilters, setShowFilters] = useState(false);
+  const [savePreferences, setSavePreferences] = useState(true);
   
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Load filter preferences from localStorage on mount
+  useEffect(() => {
+    const savedPreferences = localStorage.getItem("filterPreferences");
+    const savedSavePreference = localStorage.getItem("saveFilterPreferences");
+    
+    if (savedSavePreference !== null) {
+      setSavePreferences(savedSavePreference === "true");
+    }
+    
+    if (savedPreferences && savedSavePreference === "true") {
+      try {
+        const preferences = JSON.parse(savedPreferences);
+        if (preferences.searchQuery) setSearchQuery(preferences.searchQuery);
+        if (preferences.selectedSkills) setSelectedSkills(preferences.selectedSkills);
+        if (preferences.locationFilter) setLocationFilter(preferences.locationFilter);
+        if (preferences.payRateRange) setPayRateRange(preferences.payRateRange);
+      } catch (error) {
+        console.error("Failed to load filter preferences:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -79,6 +102,26 @@ const FreelancerDashboard = () => {
     };
     init();
   }, []);
+
+  // Save filter preferences to localStorage when they change
+  useEffect(() => {
+    if (savePreferences) {
+      const preferences = {
+        searchQuery,
+        selectedSkills,
+        locationFilter,
+        payRateRange,
+      };
+      localStorage.setItem("filterPreferences", JSON.stringify(preferences));
+    } else {
+      localStorage.removeItem("filterPreferences");
+    }
+  }, [searchQuery, selectedSkills, locationFilter, payRateRange, savePreferences]);
+
+  // Save the save preference itself
+  useEffect(() => {
+    localStorage.setItem("saveFilterPreferences", savePreferences.toString());
+  }, [savePreferences]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -407,17 +450,32 @@ const FreelancerDashboard = () => {
                     <Filter className="h-5 w-5 text-primary" />
                     Filter Jobs
                   </h4>
-                  {hasActiveFilters && (
+                  <div className="flex items-center gap-2">
                     <Button
-                      variant="ghost"
+                      variant={savePreferences ? "default" : "outline"}
                       size="sm"
-                      onClick={clearFilters}
-                      className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                      onClick={() => setSavePreferences(!savePreferences)}
+                      className={`gap-2 transition-all ${
+                        savePreferences 
+                          ? "bg-gradient-to-r from-success to-success/80 hover:shadow-lg hover:shadow-success/30" 
+                          : "border-success/30 hover:border-success"
+                      }`}
                     >
-                      <X className="h-4 w-4 mr-1" />
-                      Clear All
+                      <Save className="h-4 w-4" />
+                      {savePreferences ? "Saving" : "Save filters"}
                     </Button>
-                  )}
+                    {hasActiveFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Clear All
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Location Filter */}
